@@ -1,6 +1,6 @@
 use crate::{
-    definitions::*, chess_move::{MoveFlag, Move},
-    
+    chess_move::{Move, MoveFlag},
+    definitions::*,
 };
 
 use strum::{EnumCount, IntoEnumIterator};
