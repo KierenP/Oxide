@@ -34,7 +34,7 @@ pub enum Piece {
 }
 
 impl Piece {
-    pub fn from_type(t: PieceType, s: Side) -> Piece {
+    pub const fn from_type(t: PieceType, s: Side) -> Piece {
         match (t, s) {
             (PieceType::Pawn, Side::White) => Piece::WhitePawn,
             (PieceType::Knight, Side::White) => Piece::WhiteKnight,
@@ -160,8 +160,8 @@ impl Square {
     /// # use oxide::definitions::*;
     /// assert_eq!(Square::G2.file(), File::G);
     /// ```
-    pub fn file(&self) -> File {
-        File::from_index(*self as usize % 8).unwrap()
+    pub const fn file(&self) -> File {
+        File::from_index(*self as usize % 8)
     }
 
     /// Returns the rank of the square.
@@ -171,8 +171,8 @@ impl Square {
     /// # use oxide::definitions::*;
     /// assert_eq!(Square::G2.rank(), Rank::Two);
     /// ```
-    pub fn rank(&self) -> Rank {
-        Rank::from_index(*self as usize / 8).unwrap()
+    pub const fn rank(&self) -> Rank {
+        Rank::from_index(*self as usize / 8)
     }
 
     /// Returns the diagonal of the square
@@ -182,8 +182,8 @@ impl Square {
     /// # use oxide::definitions::*;
     /// assert_eq!(Square::G2.diagonal(), Diagonal::F1H3);
     /// ```
-    pub fn diagonal(&self) -> Diagonal {
-        Diagonal::from_index(7 + (*self as usize % 8) - (*self as usize / 8)).unwrap()
+    pub const fn diagonal(&self) -> Diagonal {
+        Diagonal::from_index(7 + (*self as usize % 8) - (*self as usize / 8))
     }
 
     /// Returns the anti-diagonal of the square.
@@ -193,16 +193,16 @@ impl Square {
     /// # use oxide::definitions::*;
     /// assert_eq!(Square::B2.antidiagonal(), AntiDiagonal::A3C1);
     /// ```
-    pub fn antidiagonal(&self) -> AntiDiagonal {
-        AntiDiagonal::from_index(14 - (*self as usize % 8) - (*self as usize / 8)).unwrap()
+    pub const fn antidiagonal(&self) -> AntiDiagonal {
+        AntiDiagonal::from_index(14 - (*self as usize % 8) - (*self as usize / 8))
     }
 
-    pub fn from_coord(file: File, rank: Rank) -> Square {
+    pub const fn from_coord(file: File, rank: Rank) -> Square {
         Square::from_index(rank as usize * 8 + file as usize)
     }
 
-    pub fn to_bb(&self) -> BB {
-        BB(1) << *self as i32
+    pub const fn to_bb(&self) -> BB {
+        BB(1 << *self as i32)
     }
 }
 
@@ -232,17 +232,17 @@ pub enum Rank {
 }
 
 impl Rank {
-    pub fn from_index(x: usize) -> Result<Rank, String> {
+    pub const fn from_index(x: usize) -> Rank {
         match x {
-            0 => Ok(Rank::One),
-            1 => Ok(Rank::Two),
-            2 => Ok(Rank::Three),
-            3 => Ok(Rank::Four),
-            4 => Ok(Rank::Five),
-            5 => Ok(Rank::Six),
-            6 => Ok(Rank::Seven),
-            7 => Ok(Rank::Eight),
-            _ => Err(format!("Invalid rank: {}", x)),
+            0 => Rank::One,
+            1 => Rank::Two,
+            2 => Rank::Three,
+            3 => Rank::Four,
+            4 => Rank::Five,
+            5 => Rank::Six,
+            6 => Rank::Seven,
+            7 => Rank::Eight,
+            _ => panic!("Invalid rank"),
         }
     }
 }
@@ -260,17 +260,17 @@ pub enum File {
 }
 
 impl File {
-    pub fn from_index(x: usize) -> Result<File, String> {
+    pub const fn from_index(x: usize) -> File {
         match x {
-            0 => Ok(File::A),
-            1 => Ok(File::B),
-            2 => Ok(File::C),
-            3 => Ok(File::D),
-            4 => Ok(File::E),
-            5 => Ok(File::F),
-            6 => Ok(File::G),
-            7 => Ok(File::H),
-            _ => Err(format!("Invalid file: {}", x)),
+            0 => File::A,
+            1 => File::B,
+            2 => File::C,
+            3 => File::D,
+            4 => File::E,
+            5 => File::F,
+            6 => File::G,
+            7 => File::H,
+            _ => panic!("Invalid file"),
         }
     }
 }
@@ -295,24 +295,24 @@ pub enum Diagonal {
 }
 
 impl Diagonal {
-    pub fn from_index(x: usize) -> Result<Diagonal, String> {
+    pub const fn from_index(x: usize) -> Diagonal {
         match x {
-            0 => Ok(Diagonal::A8A8),
-            1 => Ok(Diagonal::A7B8),
-            2 => Ok(Diagonal::A6C8),
-            3 => Ok(Diagonal::A5D8),
-            4 => Ok(Diagonal::A4E8),
-            5 => Ok(Diagonal::A3F8),
-            6 => Ok(Diagonal::A2G8),
-            7 => Ok(Diagonal::A1H8),
-            8 => Ok(Diagonal::B1H7),
-            9 => Ok(Diagonal::C1H6),
-            10 => Ok(Diagonal::D1H5),
-            11 => Ok(Diagonal::E1H4),
-            12 => Ok(Diagonal::F1H3),
-            13 => Ok(Diagonal::G1H2),
-            14 => Ok(Diagonal::H1H1),
-            _ => Err(format!("Invalid diagonal: {}", x)),
+            0 => Diagonal::A8A8,
+            1 => Diagonal::A7B8,
+            2 => Diagonal::A6C8,
+            3 => Diagonal::A5D8,
+            4 => Diagonal::A4E8,
+            5 => Diagonal::A3F8,
+            6 => Diagonal::A2G8,
+            7 => Diagonal::A1H8,
+            8 => Diagonal::B1H7,
+            9 => Diagonal::C1H6,
+            10 => Diagonal::D1H5,
+            11 => Diagonal::E1H4,
+            12 => Diagonal::F1H3,
+            13 => Diagonal::G1H2,
+            14 => Diagonal::H1H1,
+            _ => panic!("Invalid diagonal"),
         }
     }
 }
@@ -337,24 +337,24 @@ pub enum AntiDiagonal {
 }
 
 impl AntiDiagonal {
-    pub fn from_index(x: usize) -> Result<AntiDiagonal, String> {
+    pub const fn from_index(x: usize) -> AntiDiagonal {
         match x {
-            0 => Ok(AntiDiagonal::H8H8),
-            1 => Ok(AntiDiagonal::G8H7),
-            2 => Ok(AntiDiagonal::F8H6),
-            3 => Ok(AntiDiagonal::E8H5),
-            4 => Ok(AntiDiagonal::D8H4),
-            5 => Ok(AntiDiagonal::C8H3),
-            6 => Ok(AntiDiagonal::B8H2),
-            7 => Ok(AntiDiagonal::A8H1),
-            8 => Ok(AntiDiagonal::A7G1),
-            9 => Ok(AntiDiagonal::A6F1),
-            10 => Ok(AntiDiagonal::A5E1),
-            11 => Ok(AntiDiagonal::A4D1),
-            12 => Ok(AntiDiagonal::A3C1),
-            13 => Ok(AntiDiagonal::A2B1),
-            14 => Ok(AntiDiagonal::A1A1),
-            _ => Err(format!("Invalid anti-diagonal: {}", x)),
+            0 => AntiDiagonal::H8H8,
+            1 => AntiDiagonal::G8H7,
+            2 => AntiDiagonal::F8H6,
+            3 => AntiDiagonal::E8H5,
+            4 => AntiDiagonal::D8H4,
+            5 => AntiDiagonal::C8H3,
+            6 => AntiDiagonal::B8H2,
+            7 => AntiDiagonal::A8H1,
+            8 => AntiDiagonal::A7G1,
+            9 => AntiDiagonal::A6F1,
+            10 => AntiDiagonal::A5E1,
+            11 => AntiDiagonal::A4D1,
+            12 => AntiDiagonal::A3C1,
+            13 => AntiDiagonal::A2B1,
+            14 => AntiDiagonal::A1A1,
+            _ => panic!("Invalid anti-diagonal"),
         }
     }
 }
@@ -445,8 +445,8 @@ pub const BB_EMPTY: BB = BB(0);
 pub const BB_FULL: BB = BB(u64::MAX);
 
 impl BB {
-    pub fn lsb(&self) -> Square {
-        assert!(*self != BB_EMPTY);
+    pub const fn lsb(&self) -> Square {
+        assert!(self.0 != 0);
 
         let mut bb = self.0;
         let mut i = 0;

@@ -26,15 +26,15 @@ pub struct Move {
 }
 
 impl Move {
-    pub fn is_promotion(&self) -> bool {
+    pub const fn is_promotion(&self) -> bool {
         return self.flag as u8 & 0b1000 != 0;
     }
 
-    pub fn is_capture(&self) -> bool {
+    pub const fn is_capture(&self) -> bool {
         return self.flag as u8 & 0b0100 != 0;
     }
 
-    pub fn is_castle(&self) -> bool {
+    pub const fn is_castle(&self) -> bool {
         match self.flag {
             MoveFlag::KingCastle | MoveFlag::QueenCastle => true,
             _ => false,

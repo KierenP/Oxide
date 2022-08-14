@@ -67,7 +67,7 @@ impl Board {
         bb
     }
 
-    pub fn get_piece_bb(&self, piece: Piece) -> BB {
+    pub const fn get_piece_bb(&self, piece: Piece) -> BB {
         self.pieces[piece as usize]
     }
 
@@ -148,7 +148,7 @@ impl Board {
         self.update_castle_rights(m);
     }
 
-    pub fn get_king(&self, s: Side) -> Square {
+    pub const fn get_king(&self, s: Side) -> Square {
         self.get_piece_bb(Piece::from_type(PieceType::King, s))
             .lsb()
     }
