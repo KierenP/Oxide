@@ -5,7 +5,7 @@ pub fn perft(board: &Board, depth: u32) -> u64 {
     if depth == 0 {
         return 1; // even with bulk counting, this is needed for perft_divide(board, 1)
     }
-    let mut moves = vec![];
+    let mut moves = arrayvec::ArrayVec::new();
     generate_moves::legal_moves(board, &mut moves);
     let mut count = 0;
     for move_ in moves {
@@ -23,7 +23,7 @@ pub fn perft_divide(board: &Board, depth: u32) -> u64 {
 
     let start = std::time::Instant::now();
 
-    let mut moves = vec![];
+    let mut moves = arrayvec::ArrayVec::new();
     generate_moves::legal_moves(board, &mut moves);
     let mut count = 0;
     for move_ in moves {

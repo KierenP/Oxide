@@ -3,13 +3,29 @@ use crate::board::Board;
 use super::chess_move::{Move, MoveFlag};
 use crate::definitions::*;
 
-pub fn legal_moves(board: &Board, moves: &mut Vec<Move>) {
+pub trait MoveContainer {
+    fn push(&mut self, value: Move);
+}
+
+impl MoveContainer for Vec<Move> {
+    fn push(&mut self, value: Move) {
+        self.push(value);
+    }
+}
+
+impl MoveContainer for arrayvec::ArrayVec<Move, 256> {
+    fn push(&mut self, value: Move) {
+        self.push(value);
+    }
+}
+
+pub fn legal_moves<T: MoveContainer>(board: &Board, moves: &mut T) {
     let pinned = pinned_mask(board);
     quiet_moves(board, moves, &pinned);
     loud_moves(board, moves, &pinned);
 }
 
-pub fn quiet_moves(board: &Board, moves: &mut Vec<Move>, pinned: &BB) {
+pub fn quiet_moves<T: MoveContainer>(board: &Board, moves: &mut T, pinned: &BB) {
     pawn_pushes(board, moves, pinned);
     pawn_double_pushes(board, moves, pinned);
     castle_moves(board, moves);
@@ -65,7 +81,7 @@ pub fn quiet_moves(board: &Board, moves: &mut Vec<Move>, pinned: &BB) {
     }
 }
 
-pub fn loud_moves(board: &Board, moves: &mut Vec<Move>, pinned: &BB) {
+pub fn loud_moves<T: MoveContainer>(board: &Board, moves: &mut T, pinned: &BB) {
     pawn_captures(board, moves, pinned);
     pawn_promotions(board, moves, pinned);
     pawn_en_passant(board, moves);
@@ -126,7 +142,7 @@ pub fn is_in_check(board: &Board, s: Side) -> bool {
     is_square_threatened(board, board.get_king(s), s)
 }
 
-fn pawn_pushes(board: &Board, moves: &mut Vec<Move>, pinned: &BB) {
+fn pawn_pushes<T: MoveContainer>(board: &Board, moves: &mut T, pinned: &BB) {
     let forward;
     let mut targets;
 
@@ -157,7 +173,7 @@ fn pawn_pushes(board: &Board, moves: &mut Vec<Move>, pinned: &BB) {
     }
 }
 
-fn pawn_promotions(board: &Board, moves: &mut Vec<Move>, pinned: &BB) {
+fn pawn_promotions<T: MoveContainer>(board: &Board, moves: &mut T, pinned: &BB) {
     let forward;
     let mut targets;
 
@@ -205,7 +221,7 @@ fn pawn_promotions(board: &Board, moves: &mut Vec<Move>, pinned: &BB) {
     }
 }
 
-fn pawn_double_pushes(board: &Board, moves: &mut Vec<Move>, pinned: &BB) {
+fn pawn_double_pushes<T: MoveContainer>(board: &Board, moves: &mut T, pinned: &BB) {
     let forward;
     let mut targets;
 
@@ -237,7 +253,7 @@ fn pawn_double_pushes(board: &Board, moves: &mut Vec<Move>, pinned: &BB) {
     }
 }
 
-fn pawn_en_passant(board: &Board, moves: &mut Vec<Move>) {
+fn pawn_en_passant<T: MoveContainer>(board: &Board, moves: &mut T) {
     if board.en_passant.is_none() {
         return;
     }
@@ -261,7 +277,7 @@ fn pawn_en_passant(board: &Board, moves: &mut Vec<Move>) {
     }
 }
 
-fn pawn_captures(board: &Board, moves: &mut Vec<Move>, pinned: &BB) {
+fn pawn_captures<T: MoveContainer>(board: &Board, moves: &mut T, pinned: &BB) {
     let forward_left;
     let forward_right;
     let mut left_attackers;
@@ -371,7 +387,7 @@ fn pawn_captures(board: &Board, moves: &mut Vec<Move>, pinned: &BB) {
     }
 }
 
-fn castle_moves(board: &Board, moves: &mut Vec<Move>) {
+fn castle_moves<T: MoveContainer>(board: &Board, moves: &mut T) {
     let pieces = board.occupied_squares();
 
     // path1..3 are the squares the king will traverse to castle

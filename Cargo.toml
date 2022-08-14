@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 strum = { version = "0.24", features = ["derive"] }
 criterion = "0.3"
+arrayvec = "0.7.2"
 
 [lib]
 name = "oxide"

@@ -1,5 +1,3 @@
-use std::vec;
-
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use oxide::*;
 
@@ -9,7 +7,7 @@ fn bench_legal_moves(c: &mut Criterion) {
 
     c.bench_function("generate_moves::legal_moves", |b| {
         b.iter(|| {
-            let mut moves = vec![];
+            let mut moves = arrayvec::ArrayVec::new();
             generate_moves::legal_moves(&board, black_box(&mut moves))
         })
     });
