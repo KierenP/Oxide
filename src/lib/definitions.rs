@@ -75,76 +75,91 @@ pub enum Square {
 }
 
 impl Square {
-    pub fn from_index(x: usize) -> Result<Square, String> {
+    pub const fn from_index(x: usize) -> Square {
         match x {
-            0 => Ok(Square::A1),
-            1 => Ok(Square::B1),
-            2 => Ok(Square::C1),
-            3 => Ok(Square::D1),
-            4 => Ok(Square::E1),
-            5 => Ok(Square::F1),
-            6 => Ok(Square::G1),
-            7 => Ok(Square::H1),
-            8 => Ok(Square::A2),
-            9 => Ok(Square::B2),
-            10 => Ok(Square::C2),
-            11 => Ok(Square::D2),
-            12 => Ok(Square::E2),
-            13 => Ok(Square::F2),
-            14 => Ok(Square::G2),
-            15 => Ok(Square::H2),
-            16 => Ok(Square::A3),
-            17 => Ok(Square::B3),
-            18 => Ok(Square::C3),
-            19 => Ok(Square::D3),
-            20 => Ok(Square::E3),
-            21 => Ok(Square::F3),
-            22 => Ok(Square::G3),
-            23 => Ok(Square::H3),
-            24 => Ok(Square::A4),
-            25 => Ok(Square::B4),
-            26 => Ok(Square::C4),
-            27 => Ok(Square::D4),
-            28 => Ok(Square::E4),
-            29 => Ok(Square::F4),
-            30 => Ok(Square::G4),
-            31 => Ok(Square::H4),
-            32 => Ok(Square::A5),
-            33 => Ok(Square::B5),
-            34 => Ok(Square::C5),
-            35 => Ok(Square::D5),
-            36 => Ok(Square::E5),
-            37 => Ok(Square::F5),
-            38 => Ok(Square::G5),
-            39 => Ok(Square::H5),
-            40 => Ok(Square::A6),
-            41 => Ok(Square::B6),
-            42 => Ok(Square::C6),
-            43 => Ok(Square::D6),
-            44 => Ok(Square::E6),
-            45 => Ok(Square::F6),
-            46 => Ok(Square::G6),
-            47 => Ok(Square::H6),
-            48 => Ok(Square::A7),
-            49 => Ok(Square::B7),
-            50 => Ok(Square::C7),
-            51 => Ok(Square::D7),
-            52 => Ok(Square::E7),
-            53 => Ok(Square::F7),
-            54 => Ok(Square::G7),
-            55 => Ok(Square::H7),
-            56 => Ok(Square::A8),
-            57 => Ok(Square::B8),
-            58 => Ok(Square::C8),
-            59 => Ok(Square::D8),
-            60 => Ok(Square::E8),
-            61 => Ok(Square::F8),
-            62 => Ok(Square::G8),
-            63 => Ok(Square::H8),
-            _ => Err(format!("Invalid square: {}", x)),
+            0 => Square::A1,
+            1 => Square::B1,
+            2 => Square::C1,
+            3 => Square::D1,
+            4 => Square::E1,
+            5 => Square::F1,
+            6 => Square::G1,
+            7 => Square::H1,
+            8 => Square::A2,
+            9 => Square::B2,
+            10 => Square::C2,
+            11 => Square::D2,
+            12 => Square::E2,
+            13 => Square::F2,
+            14 => Square::G2,
+            15 => Square::H2,
+            16 => Square::A3,
+            17 => Square::B3,
+            18 => Square::C3,
+            19 => Square::D3,
+            20 => Square::E3,
+            21 => Square::F3,
+            22 => Square::G3,
+            23 => Square::H3,
+            24 => Square::A4,
+            25 => Square::B4,
+            26 => Square::C4,
+            27 => Square::D4,
+            28 => Square::E4,
+            29 => Square::F4,
+            30 => Square::G4,
+            31 => Square::H4,
+            32 => Square::A5,
+            33 => Square::B5,
+            34 => Square::C5,
+            35 => Square::D5,
+            36 => Square::E5,
+            37 => Square::F5,
+            38 => Square::G5,
+            39 => Square::H5,
+            40 => Square::A6,
+            41 => Square::B6,
+            42 => Square::C6,
+            43 => Square::D6,
+            44 => Square::E6,
+            45 => Square::F6,
+            46 => Square::G6,
+            47 => Square::H6,
+            48 => Square::A7,
+            49 => Square::B7,
+            50 => Square::C7,
+            51 => Square::D7,
+            52 => Square::E7,
+            53 => Square::F7,
+            54 => Square::G7,
+            55 => Square::H7,
+            56 => Square::A8,
+            57 => Square::B8,
+            58 => Square::C8,
+            59 => Square::D8,
+            60 => Square::E8,
+            61 => Square::F8,
+            62 => Square::G8,
+            63 => Square::H8,
+            _ => panic!("Invalid square"),
         }
     }
 
+    pub fn safe_from_index(x: usize) -> Result<Square, String> {
+        if x < Square::COUNT {
+            Ok(Square::from_index(x))
+        } else {
+            Err(format!("Invalid square {}", x))
+        }
+    }
+
+    /// Returns the file of the square.
+    ///
+    /// # Examples
+    /// ```
+    /// # use oxide::definitions::*;
+    /// assert_eq!(Square::G2.file(), File::G);
+    /// ```
     pub fn file(&self) -> File {
         File::from_index(*self as usize % 8).unwrap()
     }
@@ -160,8 +175,30 @@ impl Square {
         Rank::from_index(*self as usize / 8).unwrap()
     }
 
+    /// Returns the diagonal of the square
+    ///
+    /// # Examples
+    /// ```
+    /// # use oxide::definitions::*;
+    /// assert_eq!(Square::G2.diagonal(), Diagonal::F1H3);
+    /// ```
+    pub fn diagonal(&self) -> Diagonal {
+        Diagonal::from_index(7 + (*self as usize % 8) - (*self as usize / 8)).unwrap()
+    }
+
+    /// Returns the anti-diagonal of the square.
+    ///
+    /// # Examples
+    /// ```
+    /// # use oxide::definitions::*;
+    /// assert_eq!(Square::B2.antidiagonal(), AntiDiagonal::A3C1);
+    /// ```
+    pub fn antidiagonal(&self) -> AntiDiagonal {
+        AntiDiagonal::from_index(14 - (*self as usize % 8) - (*self as usize / 8)).unwrap()
+    }
+
     pub fn from_coord(file: File, rank: Rank) -> Square {
-        Square::from_index(rank as usize * 8 + file as usize).unwrap()
+        Square::from_index(rank as usize * 8 + file as usize)
     }
 
     pub fn to_bb(&self) -> BB {
@@ -210,7 +247,7 @@ impl Rank {
     }
 }
 
-#[derive(EnumCount)]
+#[derive(EnumCount, Debug, PartialEq)]
 pub enum File {
     A,
     B,
@@ -238,7 +275,7 @@ impl File {
     }
 }
 
-#[derive(EnumCount)]
+#[derive(EnumCount, Debug, PartialEq)]
 pub enum Diagonal {
     A8A8,
     A7B8,
@@ -257,7 +294,30 @@ pub enum Diagonal {
     H1H1,
 }
 
-#[derive(EnumCount)]
+impl Diagonal {
+    pub fn from_index(x: usize) -> Result<Diagonal, String> {
+        match x {
+            0 => Ok(Diagonal::A8A8),
+            1 => Ok(Diagonal::A7B8),
+            2 => Ok(Diagonal::A6C8),
+            3 => Ok(Diagonal::A5D8),
+            4 => Ok(Diagonal::A4E8),
+            5 => Ok(Diagonal::A3F8),
+            6 => Ok(Diagonal::A2G8),
+            7 => Ok(Diagonal::A1H8),
+            8 => Ok(Diagonal::B1H7),
+            9 => Ok(Diagonal::C1H6),
+            10 => Ok(Diagonal::D1H5),
+            11 => Ok(Diagonal::E1H4),
+            12 => Ok(Diagonal::F1H3),
+            13 => Ok(Diagonal::G1H2),
+            14 => Ok(Diagonal::H1H1),
+            _ => Err(format!("Invalid diagonal: {}", x)),
+        }
+    }
+}
+
+#[derive(EnumCount, Debug, PartialEq)]
 pub enum AntiDiagonal {
     H8H8,
     G8H7,
@@ -274,6 +334,29 @@ pub enum AntiDiagonal {
     A3C1,
     A2B1,
     A1A1,
+}
+
+impl AntiDiagonal {
+    pub fn from_index(x: usize) -> Result<AntiDiagonal, String> {
+        match x {
+            0 => Ok(AntiDiagonal::H8H8),
+            1 => Ok(AntiDiagonal::G8H7),
+            2 => Ok(AntiDiagonal::F8H6),
+            3 => Ok(AntiDiagonal::E8H5),
+            4 => Ok(AntiDiagonal::D8H4),
+            5 => Ok(AntiDiagonal::C8H3),
+            6 => Ok(AntiDiagonal::B8H2),
+            7 => Ok(AntiDiagonal::A8H1),
+            8 => Ok(AntiDiagonal::A7G1),
+            9 => Ok(AntiDiagonal::A6F1),
+            10 => Ok(AntiDiagonal::A5E1),
+            11 => Ok(AntiDiagonal::A4D1),
+            12 => Ok(AntiDiagonal::A3C1),
+            13 => Ok(AntiDiagonal::A2B1),
+            14 => Ok(AntiDiagonal::A1A1),
+            _ => Err(format!("Invalid anti-diagonal: {}", x)),
+        }
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -371,7 +454,7 @@ impl BB {
             bb = bb >> 1;
             i += 1;
         }
-        Square::from_index(i as usize).unwrap()
+        Square::from_index(i as usize)
     }
 
     pub fn poplsb(&mut self) -> Square {
@@ -544,22 +627,10 @@ pub const PAWN_ATTACKS: [[BB; Square::COUNT]; Side::COUNT] = {
 //------------------------------------------------------------------------------
 // https://www.chessprogramming.org/Square_Attacked_By
 
-/*pub const IN_BETWEEN: [[BB; Square::COUNT]; Square::COUNT] = {
-    let mut ret = [[BB_EMPTY; Square::COUNT]; Square::COUNT];
-    let mut i = 0;
-    while i < Square::COUNT {
-        let mut j = 0;
-        while j < Square::COUNT {
-            ret[i][j] = in_between(i, j);
-            j += 1;
-        }
-        i += 1;
-    }
-    ret
-};*/
-
 /// Get the bitboard of the squares in between the two squares. If the two
 /// squares do not share the same rank, file or diagonal, return BB_EMPTY.
+/// For efficency, an constant array of 64x64 elements are calculated at
+/// compile time and this funciton does a simple lookup
 ///
 /// # Examples
 /// ```
@@ -567,7 +638,25 @@ pub const PAWN_ATTACKS: [[BB; Square::COUNT]; Side::COUNT] = {
 /// let mask = in_between(Square::C1, Square::C4);
 /// assert_eq!(mask, SQUARE_BB[Square::C2 as usize] | SQUARE_BB[Square::C3 as usize]);
 /// ```
-pub fn in_between(sq1: Square, sq2: Square) -> BB {
+pub const fn in_between(sq1: Square, sq2: Square) -> BB {
+    IN_BETWEEN[sq1 as usize][sq2 as usize]
+}
+
+const IN_BETWEEN: [[BB; Square::COUNT]; Square::COUNT] = {
+    let mut ret = [[BB_EMPTY; Square::COUNT]; Square::COUNT];
+    let mut i = 0;
+    while i < Square::COUNT {
+        let mut j = 0;
+        while j < Square::COUNT {
+            ret[i][j] = in_between_calculate(Square::from_index(i), Square::from_index(j));
+            j += 1;
+        }
+        i += 1;
+    }
+    ret
+};
+
+pub const fn in_between_calculate(sq1: Square, sq2: Square) -> BB {
     let sq1 = sq1 as u64;
     let sq2 = sq2 as u64;
     let m1 = u64::MAX;
@@ -589,6 +678,8 @@ pub fn in_between(sq1: Square, sq2: Square) -> BB {
     line = line.wrapping_mul(btwn & btwn.wrapping_neg()); /* mul acts like shift by smaller square */
     return BB(line & btwn); /* return the bits on that line in-between */
 }
+
+//------------------------------------------------------------------------------
 
 #[cfg(test)]
 mod tests {
@@ -627,8 +718,8 @@ mod tests {
     }
 
     fn test_in_between_symmetry(sq1: usize, sq2: usize) {
-        let sq1 = Square::from_index(sq1).unwrap();
-        let sq2 = Square::from_index(sq2).unwrap();
+        let sq1 = Square::from_index(sq1);
+        let sq2 = Square::from_index(sq2);
         assert_eq!(in_between(sq1, sq2), in_between(sq2, sq1));
     }
 }

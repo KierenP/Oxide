@@ -4,204 +4,121 @@ use super::chess_move::{Move, MoveFlag};
 use crate::definitions::*;
 
 pub fn legal_moves(board: &Board, moves: &mut Vec<Move>) {
-    quiet_moves(board, moves);
-    loud_moves(board, moves);
+    let pinned = pinned_mask(board);
+    quiet_moves(board, moves, &pinned);
+    loud_moves(board, moves, &pinned);
 }
 
-pub fn quiet_moves(board: &Board, moves: &mut Vec<Move>) {
-    pawn_pushes(board, moves);
-    pawn_double_pushes(board, moves);
+pub fn quiet_moves(board: &Board, moves: &mut Vec<Move>, pinned: &BB) {
+    pawn_pushes(board, moves, pinned);
+    pawn_double_pushes(board, moves, pinned);
     castle_moves(board, moves);
 
     let pieces = board.occupied_squares();
 
-    let mut knights = board.get_piece_bb(Piece::from_type(PieceType::Knight, board.stm));
-    while knights != BB_EMPTY {
-        let from = knights.poplsb();
-        let mut targets = KNIGHT_ATTACKS[from as usize] & !pieces;
+    let mut generate_moves = |mut targets: BB, from| {
         while targets != BB_EMPTY {
             let to = targets.poplsb();
             let m = Move {
-                from: from,
-                to: to,
+                from,
+                to,
                 flag: MoveFlag::Quiet,
             };
 
-            if !move_puts_self_in_check(board, &m) {
+            if in_between(from, to) & pieces == BB_EMPTY
+                && (*pinned & SQUARE_BB[from as usize] == BB_EMPTY
+                    || !move_puts_self_in_check(board, &m))
+            {
                 moves.push(m);
             }
         }
+    };
+
+    let mut knights = board.get_piece_bb(Piece::from_type(PieceType::Knight, board.stm));
+    while knights != BB_EMPTY {
+        let from = knights.poplsb();
+        generate_moves(KNIGHT_ATTACKS[from as usize] & !pieces, from);
     }
 
     let mut kings = board.get_piece_bb(Piece::from_type(PieceType::King, board.stm));
     while kings != BB_EMPTY {
         let from = kings.poplsb();
-        let mut targets = KING_ATTACKS[from as usize] & !pieces;
-        while targets != BB_EMPTY {
-            let to = targets.poplsb();
-            let m = Move {
-                from,
-                to,
-                flag: MoveFlag::Quiet,
-            };
-
-            if !move_puts_self_in_check(board, &m) {
-                moves.push(m);
-            }
-        }
+        generate_moves(KING_ATTACKS[from as usize] & !pieces, from);
     }
 
     let mut bishops = board.get_piece_bb(Piece::from_type(PieceType::Bishop, board.stm));
     while bishops != BB_EMPTY {
         let from = bishops.poplsb();
-        let mut targets = BISHOP_ATTACKS[from as usize] & !pieces;
-        while targets != BB_EMPTY {
-            let to = targets.poplsb();
-            let m = Move {
-                from,
-                to,
-                flag: MoveFlag::Quiet,
-            };
-
-            if in_between(from, to) & pieces == BB_EMPTY && !move_puts_self_in_check(board, &m) {
-                moves.push(m);
-            }
-        }
+        generate_moves(BISHOP_ATTACKS[from as usize] & !pieces, from);
     }
 
     let mut rooks = board.get_piece_bb(Piece::from_type(PieceType::Rook, board.stm));
     while rooks != BB_EMPTY {
         let from = rooks.poplsb();
-        let mut targets = ROOK_ATTACKS[from as usize] & !pieces;
-        while targets != BB_EMPTY {
-            let to = targets.poplsb();
-            let m = Move {
-                from,
-                to,
-                flag: MoveFlag::Quiet,
-            };
-
-            if in_between(from, to) & pieces == BB_EMPTY && !move_puts_self_in_check(board, &m) {
-                moves.push(m);
-            }
-        }
+        generate_moves(ROOK_ATTACKS[from as usize] & !pieces, from);
     }
 
     let mut queens = board.get_piece_bb(Piece::from_type(PieceType::Queen, board.stm));
     while queens != BB_EMPTY {
         let from = queens.poplsb();
-        let mut targets = QUEEN_ATTACKS[from as usize] & !pieces;
-        while targets != BB_EMPTY {
-            let to = targets.poplsb();
-            let m = Move {
-                from,
-                to,
-                flag: MoveFlag::Quiet,
-            };
-
-            if in_between(from, to) & pieces == BB_EMPTY && !move_puts_self_in_check(board, &m) {
-                moves.push(m);
-            }
-        }
+        generate_moves(QUEEN_ATTACKS[from as usize] & !pieces, from);
     }
 }
 
-pub fn loud_moves(board: &Board, moves: &mut Vec<Move>) {
-    pawn_captures(board, moves);
-    pawn_promotions(board, moves);
+pub fn loud_moves(board: &Board, moves: &mut Vec<Move>, pinned: &BB) {
+    pawn_captures(board, moves, pinned);
+    pawn_promotions(board, moves, pinned);
     pawn_en_passant(board, moves);
 
     let pieces = board.occupied_squares();
     let targets = board.get_pieces(!board.stm);
 
-    let mut knights = board.get_piece_bb(Piece::from_type(PieceType::Knight, board.stm));
-    while knights != BB_EMPTY {
-        let from = knights.poplsb();
-        let mut targets = KNIGHT_ATTACKS[from as usize] & targets;
+    let mut generate_captures = |mut targets: BB, from| {
         while targets != BB_EMPTY {
             let to = targets.poplsb();
             let m = Move {
-                from: from,
-                to: to,
+                from,
+                to,
                 flag: MoveFlag::Capture,
             };
 
-            if !move_puts_self_in_check(board, &m) {
+            if in_between(from, to) & pieces == BB_EMPTY
+                && (*pinned & SQUARE_BB[from as usize] == BB_EMPTY
+                    || !move_puts_self_in_check(board, &m))
+            {
                 moves.push(m);
             }
         }
+    };
+
+    let mut knights = board.get_piece_bb(Piece::from_type(PieceType::Knight, board.stm));
+    while knights != BB_EMPTY {
+        let from = knights.poplsb();
+        generate_captures(KNIGHT_ATTACKS[from as usize] & targets, from);
     }
 
     let mut kings = board.get_piece_bb(Piece::from_type(PieceType::King, board.stm));
     while kings != BB_EMPTY {
         let from = kings.poplsb();
-        let mut targets = KING_ATTACKS[from as usize] & targets;
-        while targets != BB_EMPTY {
-            let to = targets.poplsb();
-            let m = Move {
-                from,
-                to,
-                flag: MoveFlag::Capture,
-            };
-
-            if !move_puts_self_in_check(board, &m) {
-                moves.push(m);
-            }
-        }
+        generate_captures(KING_ATTACKS[from as usize] & targets, from);
     }
 
     let mut bishops = board.get_piece_bb(Piece::from_type(PieceType::Bishop, board.stm));
     while bishops != BB_EMPTY {
         let from = bishops.poplsb();
-        let mut targets = BISHOP_ATTACKS[from as usize] & targets;
-        while targets != BB_EMPTY {
-            let to = targets.poplsb();
-            let m = Move {
-                from,
-                to,
-                flag: MoveFlag::Capture,
-            };
-
-            if in_between(from, to) & pieces == BB_EMPTY && !move_puts_self_in_check(board, &m) {
-                moves.push(m);
-            }
-        }
+        generate_captures(BISHOP_ATTACKS[from as usize] & targets, from);
     }
 
     let mut rooks = board.get_piece_bb(Piece::from_type(PieceType::Rook, board.stm));
     while rooks != BB_EMPTY {
         let from = rooks.poplsb();
-        let mut targets = ROOK_ATTACKS[from as usize] & targets;
-        while targets != BB_EMPTY {
-            let to = targets.poplsb();
-            let m = Move {
-                from,
-                to,
-                flag: MoveFlag::Capture,
-            };
-
-            if in_between(from, to) & pieces == BB_EMPTY && !move_puts_self_in_check(board, &m) {
-                moves.push(m);
-            }
-        }
+        generate_captures(ROOK_ATTACKS[from as usize] & targets, from);
     }
 
     let mut queens = board.get_piece_bb(Piece::from_type(PieceType::Queen, board.stm));
     while queens != BB_EMPTY {
         let from = queens.poplsb();
-        let mut targets = QUEEN_ATTACKS[from as usize] & targets;
-        while targets != BB_EMPTY {
-            let to = targets.poplsb();
-            let m = Move {
-                from,
-                to,
-                flag: MoveFlag::Capture,
-            };
-
-            if in_between(from, to) & pieces == BB_EMPTY && !move_puts_self_in_check(board, &m) {
-                moves.push(m);
-            }
-        }
+        generate_captures(QUEEN_ATTACKS[from as usize] & targets, from);
     }
 }
 
@@ -209,7 +126,7 @@ pub fn is_in_check(board: &Board, s: Side) -> bool {
     is_square_threatened(board, board.get_king(s), s)
 }
 
-fn pawn_pushes(board: &Board, moves: &mut Vec<Move>) {
+fn pawn_pushes(board: &Board, moves: &mut Vec<Move>, pinned: &BB) {
     let forward;
     let mut targets;
 
@@ -226,7 +143,7 @@ fn pawn_pushes(board: &Board, moves: &mut Vec<Move>) {
 
     while targets != BB_EMPTY {
         let end = targets.poplsb();
-        let start = Square::from_index((end as i8 - forward) as usize).unwrap();
+        let start = Square::from_index((end as i8 - forward) as usize);
 
         let m = Move {
             from: start,
@@ -234,13 +151,13 @@ fn pawn_pushes(board: &Board, moves: &mut Vec<Move>) {
             flag: MoveFlag::Quiet,
         };
 
-        if !move_puts_self_in_check(board, &m) {
+        if *pinned & SQUARE_BB[start as usize] == BB_EMPTY || !move_puts_self_in_check(board, &m) {
             moves.push(m);
         }
     }
 }
 
-fn pawn_promotions(board: &Board, moves: &mut Vec<Move>) {
+fn pawn_promotions(board: &Board, moves: &mut Vec<Move>, pinned: &BB) {
     let forward;
     let mut targets;
 
@@ -257,7 +174,7 @@ fn pawn_promotions(board: &Board, moves: &mut Vec<Move>) {
 
     while targets != BB_EMPTY {
         let end = targets.poplsb();
-        let start = Square::from_index((end as i8 - forward) as usize).unwrap();
+        let start = Square::from_index((end as i8 - forward) as usize);
 
         let m = Move {
             from: start,
@@ -265,7 +182,7 @@ fn pawn_promotions(board: &Board, moves: &mut Vec<Move>) {
             flag: MoveFlag::KnightPromotion,
         };
 
-        if !move_puts_self_in_check(board, &m) {
+        if *pinned & SQUARE_BB[start as usize] == BB_EMPTY || !move_puts_self_in_check(board, &m) {
             moves.push(m);
             moves.push(Move {
                 from: start,
@@ -288,7 +205,7 @@ fn pawn_promotions(board: &Board, moves: &mut Vec<Move>) {
     }
 }
 
-fn pawn_double_pushes(board: &Board, moves: &mut Vec<Move>) {
+fn pawn_double_pushes(board: &Board, moves: &mut Vec<Move>, pinned: &BB) {
     let forward;
     let mut targets;
 
@@ -306,7 +223,7 @@ fn pawn_double_pushes(board: &Board, moves: &mut Vec<Move>) {
 
     while targets != BB_EMPTY {
         let end = targets.poplsb();
-        let start = Square::from_index((end as i8 - forward) as usize).unwrap();
+        let start = Square::from_index((end as i8 - forward) as usize);
 
         let m = Move {
             from: start,
@@ -314,7 +231,7 @@ fn pawn_double_pushes(board: &Board, moves: &mut Vec<Move>) {
             flag: MoveFlag::PawnDoubleMove,
         };
 
-        if !move_puts_self_in_check(board, &m) {
+        if *pinned & SQUARE_BB[start as usize] == BB_EMPTY || !move_puts_self_in_check(board, &m) {
             moves.push(m);
         }
     }
@@ -344,7 +261,7 @@ fn pawn_en_passant(board: &Board, moves: &mut Vec<Move>) {
     }
 }
 
-fn pawn_captures(board: &Board, moves: &mut Vec<Move>) {
+fn pawn_captures(board: &Board, moves: &mut Vec<Move>, pinned: &BB) {
     let forward_left;
     let forward_right;
     let mut left_attackers;
@@ -369,7 +286,7 @@ fn pawn_captures(board: &Board, moves: &mut Vec<Move>) {
 
     while left_attackers != BB_EMPTY {
         let end = left_attackers.poplsb();
-        let start = Square::from_index((end as i8 - forward_left) as usize).unwrap();
+        let start = Square::from_index((end as i8 - forward_left) as usize);
 
         let m = Move {
             from: start,
@@ -377,7 +294,7 @@ fn pawn_captures(board: &Board, moves: &mut Vec<Move>) {
             flag: MoveFlag::Capture,
         };
 
-        if move_puts_self_in_check(board, &m) {
+        if *pinned & SQUARE_BB[start as usize] != BB_EMPTY && move_puts_self_in_check(board, &m) {
             continue;
         }
 
@@ -412,7 +329,7 @@ fn pawn_captures(board: &Board, moves: &mut Vec<Move>) {
 
     while right_attackers != BB_EMPTY {
         let end = right_attackers.poplsb();
-        let start = Square::from_index((end as i8 - forward_right) as usize).unwrap();
+        let start = Square::from_index((end as i8 - forward_right) as usize);
 
         let m = Move {
             from: start,
@@ -420,7 +337,7 @@ fn pawn_captures(board: &Board, moves: &mut Vec<Move>) {
             flag: MoveFlag::Capture,
         };
 
-        if move_puts_self_in_check(board, &m) {
+        if *pinned & SQUARE_BB[start as usize] != BB_EMPTY && move_puts_self_in_check(board, &m) {
             continue;
         }
 
@@ -457,60 +374,56 @@ fn pawn_captures(board: &Board, moves: &mut Vec<Move>) {
 fn castle_moves(board: &Board, moves: &mut Vec<Move>) {
     let pieces = board.occupied_squares();
 
-    if board.stm == Side::White
-        && board.white_king_castle
-        && in_between(Square::E1, Square::H1) & pieces == BB_EMPTY
-        && !is_square_threatened(board, Square::E1, board.stm)
-        && !is_square_threatened(board, Square::F1, board.stm)
-        && !is_square_threatened(board, Square::G1, board.stm)
-    {
-        moves.push(Move {
-            from: Square::E1,
-            to: Square::G1,
-            flag: MoveFlag::KingCastle,
-        });
-    }
+    // path1..3 are the squares the king will traverse to castle
+    let mut can_castle = |move_flag, rook, path_1, path_2, path_3| {
+        if in_between(path_1, rook) & pieces == BB_EMPTY
+            && !is_square_threatened(board, path_1, board.stm)
+            && !is_square_threatened(board, path_2, board.stm)
+            && !is_square_threatened(board, path_3, board.stm)
+        {
+            moves.push(Move {
+                from: path_1,
+                to: path_3,
+                flag: move_flag,
+            });
+        }
+    };
 
-    if board.stm == Side::White
-        && board.white_queen_castle
-        && in_between(Square::E1, Square::A1) & pieces == BB_EMPTY
-        && !is_square_threatened(board, Square::E1, board.stm)
-        && !is_square_threatened(board, Square::D1, board.stm)
-        && !is_square_threatened(board, Square::C1, board.stm)
-    {
-        moves.push(Move {
-            from: Square::E1,
-            to: Square::C1,
-            flag: MoveFlag::QueenCastle,
-        });
+    if board.stm == Side::White && board.white_king_castle {
+        can_castle(
+            MoveFlag::KingCastle,
+            Square::H1,
+            Square::E1,
+            Square::F1,
+            Square::G1,
+        );
     }
-
-    if board.stm == Side::Black
-        && board.black_king_castle
-        && in_between(Square::E8, Square::H8) & pieces == BB_EMPTY
-        && !is_square_threatened(board, Square::E8, board.stm)
-        && !is_square_threatened(board, Square::F8, board.stm)
-        && !is_square_threatened(board, Square::G8, board.stm)
-    {
-        moves.push(Move {
-            from: Square::E8,
-            to: Square::G8,
-            flag: MoveFlag::KingCastle,
-        });
+    if board.stm == Side::White && board.white_queen_castle {
+        can_castle(
+            MoveFlag::QueenCastle,
+            Square::A1,
+            Square::E1,
+            Square::D1,
+            Square::C1,
+        );
     }
-
-    if board.stm == Side::Black
-        && board.black_queen_castle
-        && in_between(Square::E8, Square::A8) & pieces == BB_EMPTY
-        && !is_square_threatened(board, Square::E8, board.stm)
-        && !is_square_threatened(board, Square::D8, board.stm)
-        && !is_square_threatened(board, Square::C8, board.stm)
-    {
-        moves.push(Move {
-            from: Square::E8,
-            to: Square::C8,
-            flag: MoveFlag::QueenCastle,
-        });
+    if board.stm == Side::Black && board.black_king_castle {
+        can_castle(
+            MoveFlag::KingCastle,
+            Square::H8,
+            Square::E8,
+            Square::F8,
+            Square::G8,
+        );
+    }
+    if board.stm == Side::Black && board.black_queen_castle {
+        can_castle(
+            MoveFlag::QueenCastle,
+            Square::A8,
+            Square::E8,
+            Square::D8,
+            Square::C8,
+        );
     }
 }
 
@@ -571,4 +484,62 @@ fn is_square_threatened(board: &Board, square: Square, side: Side) -> bool {
     }
 
     return false;
+}
+
+/// Return a mask of all potentially pinned pieces. This is an optimization, any
+/// pieces that move from a non-pinned square will not be checked for putting the
+/// king in check. If the king itself is in check, then we must check all moves
+/// to see if they put the king in check so we return BB_FULL.
+fn pinned_mask(board: &Board) -> BB {
+    let king = board.get_king(board.stm);
+
+    if is_in_check(board, board.stm) {
+        return BB_FULL;
+    }
+
+    let pieces = board.occupied_squares();
+    let our_pieces = board.get_pieces(board.stm);
+    let mut pinned = BB_EMPTY;
+
+    let enemy_queen = board.get_piece_bb(Piece::from_type(PieceType::Queen, !board.stm));
+    let enemy_bishop = board.get_piece_bb(Piece::from_type(PieceType::Bishop, !board.stm));
+    let enemy_rook = board.get_piece_bb(Piece::from_type(PieceType::Rook, !board.stm));
+    let queen_rook = enemy_queen | enemy_rook;
+    let queen_bishop = enemy_queen | enemy_bishop;
+
+    let scan_for_pinned = |mut possible_pins: BB, all_pieces: BB| -> BB {
+        let mut pinned = BB_EMPTY;
+        while possible_pins != BB_EMPTY {
+            let start = possible_pins.poplsb();
+            if in_between(king, start) & all_pieces == BB_EMPTY {
+                pinned |= SQUARE_BB[start as usize];
+            }
+        }
+        pinned
+    };
+
+    // firstly check if there is an enemy bishop or queen in the same diagonal as our king,
+    // because if not, then theres no pins. If there is, then we need to go through each of
+    // our pieces on the diagonal and see if there's anything between the king and the piece.
+    if DIAGONAL_BB[king.diagonal() as usize] & queen_bishop != BB_EMPTY {
+        pinned |= scan_for_pinned(DIAGONAL_BB[king.diagonal() as usize] & our_pieces, pieces);
+    }
+
+    if ANTI_DIAGONAL_BB[king.antidiagonal() as usize] & queen_bishop != BB_EMPTY {
+        pinned |= scan_for_pinned(
+            ANTI_DIAGONAL_BB[king.antidiagonal() as usize] & our_pieces,
+            pieces,
+        );
+    }
+    if RANK_BB[king.rank() as usize] & queen_rook != BB_EMPTY {
+        pinned |= scan_for_pinned(RANK_BB[king.rank() as usize] & our_pieces, pieces);
+    }
+
+    if FILE_BB[king.file() as usize] & queen_rook != BB_EMPTY {
+        pinned |= scan_for_pinned(FILE_BB[king.file() as usize] & our_pieces, pieces);
+    }
+
+    // consider the king itself pinned, so we always check for legality for king moves
+    pinned |= SQUARE_BB[king as usize];
+    pinned
 }

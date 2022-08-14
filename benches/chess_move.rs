@@ -1,13 +1,5 @@
-use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use oxide::{chess_move::MoveFlag, *};
-
-fn bench_perft(c: &mut Criterion) {
-    let board =
-        fen::fen_to_board("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1")
-            .unwrap();
-
-    c.bench_function("Perft", |b| b.iter(|| perft::perft(&board, 3)));
-}
 
 fn bench_move(c: &mut Criterion) {
     let move_ = chess_move::Move {
@@ -27,5 +19,5 @@ fn bench_move(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, bench_move, bench_perft);
+criterion_group!(benches, bench_move);
 criterion_main!(benches);

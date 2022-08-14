@@ -18,5 +18,13 @@ name = "oxide"
 path = "src/bin.rs"
 
 [[bench]]
-name = "movegen"
+name = "chess_move"
 harness = false
+
+[[bench]]
+name = "generate_moves"
+harness = false
+
+[profile.release]
+lto = "fat"
+codegen-units = 1

@@ -112,8 +112,7 @@ impl Board {
             // For the context of the 3-fold repetition rule, an ep square only should be set
             // if there is a pawn that could legally do the ep capture. This is somewhat of a
             // strange quirk in the chess rules and is a pain to implement so we ignore this.
-            self.en_passant =
-                Some(Square::from_index((m.to as usize + m.from as usize) / 2).unwrap());
+            self.en_passant = Some(Square::from_index((m.to as usize + m.from as usize) / 2));
         } else {
             self.en_passant = None;
         }

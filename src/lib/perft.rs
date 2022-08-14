@@ -198,9 +198,14 @@ mod tests {
     #[test]
     #[ignore]
     fn correct_count() {
-        for (fen, depth, answer) in POSITIONS.iter() {
+        let start = std::time::Instant::now();
+        for (fen, depth, answer) in &POSITIONS[0..10] {
             let board = fen::fen_to_board(fen).unwrap();
             assert_eq!(perft(&board, *depth), *answer);
         }
+        println!(
+            "COMPLETED PERFT IN {}s",
+            start.elapsed().as_millis() as f64 / 1000.0
+        );
     }
 }

@@ -12,7 +12,7 @@ pub fn fen_to_board(fen: &str) -> Result<Board, String> {
             '1'..='8' => i += c.to_digit(10).unwrap() as usize,
             '/' => (),
             _ => {
-                let square = Square::from_index((7 - (i / 8)) * 8 + i % 8)?;
+                let square = Square::from_index((7 - (i / 8)) * 8 + i % 8);
                 let piece = char_to_piece(c)?;
                 board.set_square(square, piece);
                 i += 1;
@@ -55,7 +55,7 @@ pub fn board_to_fen(board: &Board) -> String {
     for rank in (0..8).rev() {
         let mut empty = 0;
         for file in 0..8 {
-            let square = Square::from_index(rank * 8 + file).expect("Invalid square");
+            let square = Square::from_index(rank * 8 + file);
             let piece = board.get_square(square);
             if piece.is_some() {
                 if empty > 0 {
@@ -158,7 +158,7 @@ fn str_to_square(s: &str) -> Result<Square, String> {
         return Err(format!("Invalid square string {s}"));
     }
 
-    Square::from_index((rank as usize - '1' as usize) * 8 + (file as usize - 'a' as usize))
+    Square::safe_from_index((rank as usize - '1' as usize) * 8 + (file as usize - 'a' as usize))
 }
 
 fn ep_to_str(square: Option<Square>) -> String {
