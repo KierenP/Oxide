@@ -7,6 +7,9 @@ pub fn perft(board: &Board, depth: u32) -> u64 {
     }
     let mut moves = arrayvec::ArrayVec::new();
     generate_moves::legal_moves(board, &mut moves);
+    if depth == 1 {
+        return moves.len() as u64; // bulk counting
+    }
     let mut count = 0;
     for move_ in moves {
         let mut board = board.clone();

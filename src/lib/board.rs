@@ -42,7 +42,6 @@ impl Board {
     }
 
     pub fn set_square(&mut self, square: Square, piece: Piece) {
-        self.clear_square(square);
         self.pieces[piece as usize] |= square.to_bb();
     }
 
@@ -75,6 +74,10 @@ impl Board {
         let from_piece = self
             .get_square(m.from)
             .unwrap_or_else(|| panic!("No piece at {:?}", m.from));
+
+        if m.is_capture() {
+            self.clear_square(m.to);
+        }
 
         if m.is_capture() || from_piece == Piece::from_type(PieceType::Pawn, self.stm) {
             self.halfmove_clock = 0;
@@ -150,7 +153,7 @@ impl Board {
 
     pub const fn get_king(&self, s: Side) -> Square {
         self.get_piece_bb(Piece::from_type(PieceType::King, s))
-            .lsb()
+            .ctz()
     }
 
     pub fn get_pieces(&self, s: Side) -> BB {

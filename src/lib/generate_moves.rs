@@ -25,6 +25,28 @@ pub fn legal_moves<T: MoveContainer>(board: &Board, moves: &mut T) {
     loud_moves(board, moves, &pinned);
 }
 
+pub fn generate_moves<T: MoveContainer>(
+    board: &Board,
+    moves: &mut T,
+    mut targets: BB,
+    from: Square,
+    pieces: BB,
+    pinned: &BB,
+    flag: MoveFlag,
+) {
+    while targets != BB_EMPTY {
+        let to = targets.poplsb();
+        let m = Move { from, to, flag };
+
+        if in_between(from, to) & pieces == BB_EMPTY
+            && (*pinned & SQUARE_BB[from as usize] == BB_EMPTY
+                || !move_puts_self_in_check(board, &m))
+        {
+            moves.push(m);
+        }
+    }
+}
+
 pub fn quiet_moves<T: MoveContainer>(board: &Board, moves: &mut T, pinned: &BB) {
     pawn_pushes(board, moves, pinned);
     pawn_double_pushes(board, moves, pinned);
@@ -32,52 +54,74 @@ pub fn quiet_moves<T: MoveContainer>(board: &Board, moves: &mut T, pinned: &BB) 
 
     let pieces = board.occupied_squares();
 
-    let mut generate_moves = |mut targets: BB, from| {
-        while targets != BB_EMPTY {
-            let to = targets.poplsb();
-            let m = Move {
-                from,
-                to,
-                flag: MoveFlag::Quiet,
-            };
-
-            if in_between(from, to) & pieces == BB_EMPTY
-                && (*pinned & SQUARE_BB[from as usize] == BB_EMPTY
-                    || !move_puts_self_in_check(board, &m))
-            {
-                moves.push(m);
-            }
-        }
-    };
-
     let mut knights = board.get_piece_bb(Piece::from_type(PieceType::Knight, board.stm));
     while knights != BB_EMPTY {
         let from = knights.poplsb();
-        generate_moves(KNIGHT_ATTACKS[from as usize] & !pieces, from);
+        generate_moves(
+            board,
+            moves,
+            KNIGHT_ATTACKS[from as usize] & !pieces,
+            from,
+            pieces,
+            pinned,
+            MoveFlag::Quiet,
+        );
     }
 
     let mut kings = board.get_piece_bb(Piece::from_type(PieceType::King, board.stm));
     while kings != BB_EMPTY {
         let from = kings.poplsb();
-        generate_moves(KING_ATTACKS[from as usize] & !pieces, from);
+        generate_moves(
+            board,
+            moves,
+            KING_ATTACKS[from as usize] & !pieces,
+            from,
+            pieces,
+            pinned,
+            MoveFlag::Quiet,
+        );
     }
 
     let mut bishops = board.get_piece_bb(Piece::from_type(PieceType::Bishop, board.stm));
     while bishops != BB_EMPTY {
         let from = bishops.poplsb();
-        generate_moves(BISHOP_ATTACKS[from as usize] & !pieces, from);
+        generate_moves(
+            board,
+            moves,
+            BISHOP_ATTACKS[from as usize] & !pieces,
+            from,
+            pieces,
+            pinned,
+            MoveFlag::Quiet,
+        );
     }
 
     let mut rooks = board.get_piece_bb(Piece::from_type(PieceType::Rook, board.stm));
     while rooks != BB_EMPTY {
         let from = rooks.poplsb();
-        generate_moves(ROOK_ATTACKS[from as usize] & !pieces, from);
+        generate_moves(
+            board,
+            moves,
+            ROOK_ATTACKS[from as usize] & !pieces,
+            from,
+            pieces,
+            pinned,
+            MoveFlag::Quiet,
+        );
     }
 
     let mut queens = board.get_piece_bb(Piece::from_type(PieceType::Queen, board.stm));
     while queens != BB_EMPTY {
         let from = queens.poplsb();
-        generate_moves(QUEEN_ATTACKS[from as usize] & !pieces, from);
+        generate_moves(
+            board,
+            moves,
+            QUEEN_ATTACKS[from as usize] & !pieces,
+            from,
+            pieces,
+            pinned,
+            MoveFlag::Quiet,
+        );
     }
 }
 
@@ -89,52 +133,74 @@ pub fn loud_moves<T: MoveContainer>(board: &Board, moves: &mut T, pinned: &BB) {
     let pieces = board.occupied_squares();
     let targets = board.get_pieces(!board.stm);
 
-    let mut generate_captures = |mut targets: BB, from| {
-        while targets != BB_EMPTY {
-            let to = targets.poplsb();
-            let m = Move {
-                from,
-                to,
-                flag: MoveFlag::Capture,
-            };
-
-            if in_between(from, to) & pieces == BB_EMPTY
-                && (*pinned & SQUARE_BB[from as usize] == BB_EMPTY
-                    || !move_puts_self_in_check(board, &m))
-            {
-                moves.push(m);
-            }
-        }
-    };
-
     let mut knights = board.get_piece_bb(Piece::from_type(PieceType::Knight, board.stm));
     while knights != BB_EMPTY {
         let from = knights.poplsb();
-        generate_captures(KNIGHT_ATTACKS[from as usize] & targets, from);
+        generate_moves(
+            board,
+            moves,
+            KNIGHT_ATTACKS[from as usize] & targets,
+            from,
+            pieces,
+            pinned,
+            MoveFlag::Capture,
+        );
     }
 
     let mut kings = board.get_piece_bb(Piece::from_type(PieceType::King, board.stm));
     while kings != BB_EMPTY {
         let from = kings.poplsb();
-        generate_captures(KING_ATTACKS[from as usize] & targets, from);
+        generate_moves(
+            board,
+            moves,
+            KING_ATTACKS[from as usize] & targets,
+            from,
+            pieces,
+            pinned,
+            MoveFlag::Capture,
+        );
     }
 
     let mut bishops = board.get_piece_bb(Piece::from_type(PieceType::Bishop, board.stm));
     while bishops != BB_EMPTY {
         let from = bishops.poplsb();
-        generate_captures(BISHOP_ATTACKS[from as usize] & targets, from);
+        generate_moves(
+            board,
+            moves,
+            BISHOP_ATTACKS[from as usize] & targets,
+            from,
+            pieces,
+            pinned,
+            MoveFlag::Capture,
+        );
     }
 
     let mut rooks = board.get_piece_bb(Piece::from_type(PieceType::Rook, board.stm));
     while rooks != BB_EMPTY {
         let from = rooks.poplsb();
-        generate_captures(ROOK_ATTACKS[from as usize] & targets, from);
+        generate_moves(
+            board,
+            moves,
+            ROOK_ATTACKS[from as usize] & targets,
+            from,
+            pieces,
+            pinned,
+            MoveFlag::Capture,
+        );
     }
 
     let mut queens = board.get_piece_bb(Piece::from_type(PieceType::Queen, board.stm));
     while queens != BB_EMPTY {
         let from = queens.poplsb();
-        generate_captures(QUEEN_ATTACKS[from as usize] & targets, from);
+        generate_moves(
+            board,
+            moves,
+            QUEEN_ATTACKS[from as usize] & targets,
+            from,
+            pieces,
+            pinned,
+            MoveFlag::Capture,
+        );
     }
 }
 
@@ -318,25 +384,25 @@ fn pawn_captures<T: MoveContainer>(board: &Board, moves: &mut T, pinned: &BB) {
             moves.push(Move {
                 from: start,
                 to: end,
-                flag: MoveFlag::KnightPromotion,
+                flag: MoveFlag::KnightPromotionCapture,
             });
 
             moves.push(Move {
                 from: start,
                 to: end,
-                flag: MoveFlag::BishopPromotion,
+                flag: MoveFlag::BishopPromotionCapture,
             });
 
             moves.push(Move {
                 from: start,
                 to: end,
-                flag: MoveFlag::RookPromotion,
+                flag: MoveFlag::RookPromotionCapture,
             });
 
             moves.push(Move {
                 from: start,
                 to: end,
-                flag: MoveFlag::QueenPromotion,
+                flag: MoveFlag::QueenPromotionCapture,
             });
         } else {
             moves.push(m);
@@ -361,25 +427,25 @@ fn pawn_captures<T: MoveContainer>(board: &Board, moves: &mut T, pinned: &BB) {
             moves.push(Move {
                 from: start,
                 to: end,
-                flag: MoveFlag::KnightPromotion,
+                flag: MoveFlag::KnightPromotionCapture,
             });
 
             moves.push(Move {
                 from: start,
                 to: end,
-                flag: MoveFlag::BishopPromotion,
+                flag: MoveFlag::BishopPromotionCapture,
             });
 
             moves.push(Move {
                 from: start,
                 to: end,
-                flag: MoveFlag::RookPromotion,
+                flag: MoveFlag::RookPromotionCapture,
             });
 
             moves.push(Move {
                 from: start,
                 to: end,
-                flag: MoveFlag::QueenPromotion,
+                flag: MoveFlag::QueenPromotionCapture,
             });
         } else {
             moves.push(m);

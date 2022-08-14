@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 strum = { version = "0.24", features = ["derive"] }
-criterion = "0.3"
+criterion = { version = "0.3", features = ["html_reports"] }
 arrayvec = "0.7.2"
 
 [lib]
@@ -26,6 +26,11 @@ harness = false
 name = "generate_moves"
 harness = false
 
+[[bench]]
+name = "perft"
+harness = false
+
 [profile.release]
 lto = "fat"
 codegen-units = 1
+debug = true

@@ -362,7 +362,7 @@ impl AntiDiagonal {
 //------------------------------------------------------------------------------
 
 #[derive(Copy, Clone, PartialEq)]
-pub struct BB(u64);
+pub struct BB(pub u64);
 
 impl std::ops::Not for BB {
     type Output = Self;
@@ -445,22 +445,36 @@ pub const BB_EMPTY: BB = BB(0);
 pub const BB_FULL: BB = BB(u64::MAX);
 
 impl BB {
-    pub const fn lsb(&self) -> Square {
+    /// return the number of trailing zeros in the bitboard. This is useful
+    /// as it returns the index of the least significant bit.
+    ///
+    /// # Example
+    /// ```
+    /// # use oxide::definitions::*;
+    /// let bb = (Square::A6).to_bb() | (Square::B7).to_bb();
+    /// assert_eq!(bb.ctz(), Square::A6);
+    /// ```
+    pub const fn ctz(&self) -> Square {
         assert!(self.0 != 0);
-
-        let mut bb = self.0;
-        let mut i = 0;
-        while bb & 1 == 0 {
-            bb = bb >> 1;
-            i += 1;
-        }
+        let i = self.0.trailing_zeros();
         Square::from_index(i as usize)
     }
 
+    /// return the number of leading zeros in the bitboard, and flip the least
+    /// significant bit. This is particularlly useful in a loop
+    ///
+    /// # Example
+    /// ```
+    /// # use oxide::definitions::*;
+    /// let mut bb = (Square::A6).to_bb() | (Square::B7).to_bb();
+    /// while bb != BB_EMPTY {
+    ///     let sq = bb.poplsb();
+    ///     // ...
+    /// }
+    /// ```
     pub fn poplsb(&mut self) -> Square {
-        assert!(*self != BB_EMPTY);
-
-        let index = self.lsb();
+        assert!(self.0 != 0);
+        let index = self.ctz();
         self.0 &= self.0 - 1;
         index
     }
